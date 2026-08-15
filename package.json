@@ -10,6 +10,16 @@
     "README.md",
     "LICENSE"
   ],
+  "author": "xinaps <https://github.com/xinaps-dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xinaps-dev/pi-requesty-provider.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xinaps-dev/pi-requesty-provider/issues"
+  },
+  "homepage": "https://github.com/xinaps-dev/pi-requesty-provider",
   "keywords": [
     "pi-package",
     "pi-extension",
@@ -29,9 +39,12 @@
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-agent-core": "*"
+    "@earendil-works/pi-ai": "^0.84.0",
+    "@earendil-works/pi-coding-agent": "^0.84.0",
+    "@earendil-works/pi-agent-core": "^0.84.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "^0.84.2",
@@ -41,7 +54,6 @@
     "typescript": "^5.7.0",
     "vitest": "^2.0.0"
   },
-  "license": "MIT",
   "vitest": {
     "testEnvironment": "node",
     "globals": true
