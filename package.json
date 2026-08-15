@@ -1,6 +1,6 @@
 {
   "name": "pi-requesty-provider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Requesty provider extension for pi coding agent with dynamic model discovery, unified /requesty command, and /login support",
   "type": "module",
   "main": "dist/index.js",
@@ -23,9 +23,15 @@
   "keywords": [
     "pi-package",
     "pi-extension",
+    "pi",
+    "pi-coding-agent",
+    "pi-extensions",
     "requesty",
     "llm-router",
-    "coding-agent"
+    "coding-agent",
+    "openai-compatible",
+    "models",
+    "provider"
   ],
   "scripts": {
     "build": "tsc",
