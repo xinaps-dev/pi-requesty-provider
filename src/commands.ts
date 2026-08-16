@@ -1,171 +1,148 @@
 import type { ExtensionCommandContext, RegisteredCommand } from "@earendil-works/pi-coding-agent";
-import type { Model } from "@earendil-works/pi-ai";
-import {
-  getCachedModels,
-  setCachedModels,
-} from "./provider.js";
-import { REQUESTY_PROVIDER_ID } from "./constants.js";
+import type { AutocompleteItem, SubcommandDefinition } from "./types.js";
+
+/** Internal registry of all registered subcommands. */
+const registeredSubcommands = new Map<string, SubcommandDefinition>();
 
 /**
- * Available subcommands for the /requesty command.
+ * Register a single subcommand in the router.
  */
-export const REQUESTY_SUBCOMMANDS = ["sync", "status"] as const;
-export type RequestySubcommand = (typeof REQUESTY_SUBCOMMANDS)[number];
-
-/** Minimal AutocompleteItem type (from pi-tui, re-defined for local use). */
-interface AutocompleteItem {
-  value: string;
-  label: string;
-  description?: string;
+export function registerSubcommand(subcommand: SubcommandDefinition): void {
+  registeredSubcommands.set(subcommand.name, subcommand);
 }
 
 /**
- * Create the /requesty command definition.
+ * Register multiple subcommands at once.
+ */
+export function registerSubcommands(subcommands: SubcommandDefinition[]): void {
+  for (const subcommand of subcommands) {
+    registerSubcommand(subcommand);
+  }
+}
+
+/**
+ * Clear all registered subcommands. Useful for tests and clean initializations.
+ */
+export function clearSubcommands(): void {
+  registeredSubcommands.clear();
+}
+
+/**
+ * Build dynamic help text from all registered subcommands.
+ */
+function buildHelpText(): string {
+  const lines: string[] = [];
+  lines.push("Requesty Provider Commands:\n");
+
+  // Group subcommands by category
+  const categories = new Map<string, SubcommandDefinition[]>();
+  for (const sub of registeredSubcommands.values()) {
+    const cat = sub.category || "General";
+    if (!categories.has(cat)) {
+      categories.set(cat, []);
+    }
+    categories.get(cat)!.push(sub);
+  }
+
+  for (const [category, subs] of categories) {
+    lines.push(`  ${category}:`);
+    for (const sub of subs) {
+      lines.push(`    /requesty ${sub.name}  ${sub.description}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("Authentication:");
+  lines.push("  /login requesty        Authenticate with Requesty API key");
+  lines.push("  /logout requesty       Remove stored credentials");
+  lines.push("");
+  lines.push("Model Selection:");
+  lines.push("  /model                 Select a model (use fuzzy search to filter)");
+  lines.push("  Models appear as requesty/<model-id> in the selector");
+
+  return lines.join("\n");
+}
+
+/**
+ * Show help using the extension's UI.
+ */
+function showHelp(ctx: ExtensionCommandContext): void {
+  ctx.ui.notify(buildHelpText());
+}
+
+/**
+ * Create the /requesty root command with hierarchical subcommand routing.
  */
 export function createRequestyCommand(): RegisteredCommand {
   return {
     name: "requesty",
     sourceInfo: { type: "extension" } as any,
-    description: "Requesty provider management (sync, status)",
+    description: "Requesty management command",
     getArgumentCompletions: (argumentPrefix: string): AutocompleteItem[] => {
       const prefix = argumentPrefix.toLowerCase();
-      return REQUESTY_SUBCOMMANDS
-        .filter((cmd) => cmd.startsWith(prefix))
-        .map((cmd) => ({
-          value: cmd,
-          label: cmd,
-          description:
-            cmd === "sync"
-              ? "Sync model catalog from Requesty"
-              : "Show connection status",
+      const hasTrailingSpace = argumentPrefix.endsWith(" ");
+      const trimmed = argumentPrefix.trim();
+      const tokens = trimmed ? trimmed.split(/\s+/) : [];
+
+      // Determine if we are completing arguments of a subcommand:
+      // - Either there's a trailing space after the subcommand name (e.g. "search ")
+      // - Or there are multiple tokens already (e.g. "search nat")
+      const isSubcommandArg = (hasTrailingSpace && tokens.length >= 1) || tokens.length > 1;
+
+      if (isSubcommandArg) {
+        const subcommandName = tokens[0];
+        const subcommand = registeredSubcommands.get(subcommandName);
+        if (subcommand && subcommand.getArgumentCompletions) {
+          const subArgs = hasTrailingSpace && tokens.length === 1 ? [] : hasTrailingSpace ? [...tokens.slice(1), ""] : tokens.slice(1);
+          const rawCompletions = subcommand.getArgumentCompletions(subArgs);
+
+          const basePrefix = hasTrailingSpace
+            ? `${tokens.join(" ")} `
+            : `${tokens.slice(0, -1).join(" ")} `;
+
+          return rawCompletions.map((item) => ({
+            ...item,
+            value: item.value.startsWith(basePrefix) ? item.value : `${basePrefix}${item.value}`,
+          }));
+        }
+        return [];
+      }
+
+      // Otherwise: filter registered subcommand names by prefix
+      return Array.from(registeredSubcommands.values())
+        .filter((sub) => sub.name.startsWith(prefix))
+        .map((sub) => ({
+          value: sub.name,
+          label: sub.name,
+          description: sub.description,
         }));
     },
-    handler: async (args: string, ctx: ExtensionCommandContext) => {
-      const trimmed = args.trim().toLowerCase();
+    handler: async (args: string, ctx: ExtensionCommandContext): Promise<void> => {
+      const trimmed = args.trim();
 
-      if (!trimmed || trimmed === "help") {
+      // Show help if no args or explicit "help"
+      if (!trimmed || trimmed.toLowerCase() === "help") {
         showHelp(ctx);
         return;
       }
 
-      switch (trimmed) {
-        case "sync":
-          await handleSync(ctx);
-          break;
-        case "status":
-          await handleStatus(ctx);
-          break;
-        default:
-          ctx.ui.notify(
-            `Unknown subcommand: "${trimmed}". Use /requesty for help.`,
-            "error"
-          );
+      // Split into [subcommandName, ...restArgs]
+      const tokens = trimmed.split(/\s+/);
+      const subcommandName = tokens[0];
+      const restArgs = tokens.slice(1);
+
+      // Look up the subcommand
+      const subcommand = registeredSubcommands.get(subcommandName);
+      if (!subcommand) {
+        ctx.ui.notify(
+          `Unknown subcommand: "${subcommandName}". Use /requesty for help.`,
+          "error"
+        );
+        return;
       }
+
+      // Delegate to the subcommand handler
+      await subcommand.handler(restArgs, ctx);
     },
   };
-}
-
-/**
- * Show usage help for the /requesty command.
- */
-function showHelp(ctx: ExtensionCommandContext): void {
-  const helpText = `Requesty Provider Commands:
-
-  /requesty              Show this help message
-  /requesty sync         Sync model catalog from Requesty API
-  /requesty status       Show current connection status
-
-Authentication:
-  /login requesty        Authenticate with Requesty API key
-  /logout requesty       Remove stored credentials
-
-Model Selection:
-  /model                 Select a model (use fuzzy search to filter)
-  Models appear as requesty/<model-id> in the selector`;
-
-  ctx.ui.notify(helpText);
-}
-
-/**
- * Handle the "sync" subcommand — refresh the model catalog.
- */
-async function handleSync(ctx: ExtensionCommandContext): Promise<void> {
-  ctx.ui.setStatus("requesty-sync", "Syncing models…");
-
-  try {
-    // Get auth from modelRegistry
-    const authResult = await ctx.modelRegistry.getProviderAuth(
-      REQUESTY_PROVIDER_ID
-    );
-
-    if (!authResult) {
-      ctx.ui.notify(
-        "Not authenticated. Run /login requesty first.",
-        "warning"
-      );
-      ctx.ui.setStatus("requesty-sync", undefined);
-      return;
-    }
-
-    // Use modelRegistry refresh which handles the provider's refreshModels
-    const result = await ctx.modelRegistry.refresh({
-      providers: [REQUESTY_PROVIDER_ID],
-      signal: ctx.signal || new AbortController().signal,
-    });
-
-    if (result.aborted) {
-      ctx.ui.notify("Sync was aborted.", "warning");
-      return;
-    }
-
-    const refreshError = result.errors.get(REQUESTY_PROVIDER_ID);
-    if (refreshError) {
-      ctx.ui.notify(`Sync failed: ${refreshError.message}`, "error");
-      return;
-    }
-
-    const models = getCachedModels();
-
-    if (models.length > 0) {
-      ctx.ui.notify(
-        `✓ Requesty models synced: ${models.length} models available.`
-      );
-    } else {
-      ctx.ui.notify("No models returned from Requesty.", "warning");
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    ctx.ui.notify(`Sync failed: ${message}`, "error");
-  } finally {
-    ctx.ui.setStatus("requesty-sync", undefined);
-  }
-}
-
-/**
- * Handle the "status" subcommand — show current connection info.
- */
-async function handleStatus(ctx: ExtensionCommandContext): Promise<void> {
-  const authResult = await ctx.modelRegistry.getProviderAuth(
-    REQUESTY_PROVIDER_ID
-  );
-
-  const models = getCachedModels();
-
-  let statusLine = "Requesty Provider Status:\n";
-  statusLine += `  - Authenticated: ${authResult ? "Yes" : "No"}\n`;
-
-  if (authResult) {
-    statusLine += `  - Source: ${authResult.source}\n`;
-    statusLine += `  - Base URL: ${authResult.auth.baseUrl}\n`;
-  }
-
-  statusLine += `  - Available Models: ${models.length} loaded\n`;
-
-  // Try to get the currently active model
-  const currentModel = ctx.model;
-  if (currentModel && currentModel.provider === REQUESTY_PROVIDER_ID) {
-    statusLine += `  - Active Model: ${currentModel.id}\n`;
-  }
-
-  ctx.ui.notify(statusLine);
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createRequestyAuth } from "../src/auth.js";
-import { DEFAULT_BASE_URL } from "../src/constants.js";
+import { createRequestyAuth } from "../../src/provider/auth.js";
+import { DEFAULT_BASE_URL } from "../../src/provider/constants.js";
 
 describe("createRequestyAuth - resolve", () => {
   const auth = createRequestyAuth();

@@ -1,8 +1,5 @@
 import type { Model } from "@earendil-works/pi-ai";
-import type {
-  RequestyModel,
-  RequestyPricingTier,
-} from "./types.js";
+import type { RequestyModel, RequestyPiModel, RequestyPricingTier } from "./types.js";
 import {
   DEFAULT_CONTEXT_WINDOW,
   DEFAULT_MAX_TOKENS,
@@ -18,7 +15,7 @@ import {
 export function transformRequestyModelToPiModel(
   model: RequestyModel,
   baseUrl: string
-): Model<"openai-completions"> {
+): RequestyPiModel {
   const name = model.name ?? model.model_canonical_name ?? model.id;
 
   // Determine reasoning support
@@ -43,6 +40,9 @@ export function transformRequestyModelToPiModel(
     supportsReasoningEffort: reasoning,
   };
 
+  // Web search support
+  const supportsWebSearch = model.supports_web_search === true;
+
   return {
     id: model.id,
     name,
@@ -55,6 +55,7 @@ export function transformRequestyModelToPiModel(
     contextWindow,
     maxTokens,
     compat,
+    supportsWebSearch,
   };
 }
 
@@ -113,7 +114,8 @@ function calculatePricing(model: RequestyModel): Model<"openai-completions">["co
 }
 
 /**
- * Transform an array of Requesty models into pi Models.
+ * Transform an array of Requesty models into pi Models, filtering out
+ * models that do not support tool/function calling.
  * @param models - Raw models from the Requesty API.
  * @param baseUrl - The base URL for all models.
  * @returns Array of pi-compatible Model definitions.
@@ -121,6 +123,18 @@ function calculatePricing(model: RequestyModel): Model<"openai-completions">["co
 export function transformRequestyModels(
   models: RequestyModel[],
   baseUrl: string
-): Model<"openai-completions">[] {
-  return models.map((model) => transformRequestyModelToPiModel(model, baseUrl));
+): RequestyPiModel[] {
+  return models
+    .filter((model) => {
+      // 1. Filter out models that explicitly declare lack of tool/function calling support
+      if (model.supports_tools === false || model.supports_function_calling === false) {
+        return false;
+      }
+      // 2. Safety filter for known providers lacking tool calling support
+      if (model.id.startsWith("perplexity/")) {
+        return false;
+      }
+      return true;
+    })
+    .map((model) => transformRequestyModelToPiModel(model, baseUrl));
 }

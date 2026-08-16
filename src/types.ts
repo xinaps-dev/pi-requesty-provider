@@ -1,74 +1,22 @@
-/**
- * Pricing tier structure from Requesty API.
- * Defines per-token costs for different usage ranges.
- */
-export interface RequestyPricingTier {
-  /** Token count above which this tier applies. */
-  input_tokens_above: number;
-  /** Price per input token. */
-  input_price: number;
-  /** Price per output token. */
-  output_price: number;
-  /** Price per cached read token. */
-  cached_read_price?: number;
-  /** Price per cached write token. */
-  caching_price?: number;
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+
+/** Elemento para autocompletado en el TUI. */
+export interface AutocompleteItem {
+  value: string;
+  label: string;
+  description?: string;
 }
 
-/**
- * Direct pricing fields (non-tiered).
- */
-export interface RequestyDirectPricing {
-  /** Price per input token. */
-  input_price: number;
-  /** Price per output token. */
-  output_price: number;
-  /** Price per cached read token. */
-  cached_read_price?: number;
-  /** Price per cached write token. */
-  caching_price?: number;
-}
-
-/**
- * A single model entry from the Requesty GET /v1/models endpoint.
- */
-export interface RequestyModel {
-  /** Unique model identifier (e.g., "anthropic/claude-sonnet-4-5"). */
-  id: string;
-  /** Canonical display name. */
-  model_canonical_name?: string;
-  /** Human-readable name. */
-  name?: string;
-  /** Whether the model supports reasoning/thinking. */
-  supports_reasoning?: boolean;
-  /** Whether the model supports vision (image input). */
-  supports_vision?: boolean;
-  /** Maximum context window in tokens. */
-  context_window?: number;
-  /** Maximum output tokens. */
-  max_output_tokens?: number;
-  /** Whether the provider supports the `developer` role (vs `system`). */
-  supports_role_developer?: boolean;
-  /** Pricing as an array of tiers. */
-  pricing?: RequestyPricingTier[];
-  /** Direct pricing fields (non-tiered). */
-  input_price?: number;
-  output_price?: number;
-  cached_read_price?: number;
-  caching_price?: number;
-}
-
-/**
- * Response from the Requesty GET /v1/models endpoint.
- */
-export interface RequestyModelsResponse {
-  /** Array of available models. */
-  data: RequestyModel[];
-}
-
-/**
- * Provider-scoped environment values resolved for Requesty.
- */
-export interface RequestyProviderEnv {
-  REQUESTY_BASE_URL?: string;
+/** Definición base de un subcomando o grupo de subcomandos. */
+export interface SubcommandDefinition {
+  /** Nombre del subcomando (ej. "sync", "status", "search"). */
+  name: string;
+  /** Breve descripción para la ayuda y el autocompletado. */
+  description: string;
+  /** Categoría o grupo al que pertenece (ej. "Provider Management", "Search"). */
+  category?: string;
+  /** Función para autocompletar argumentos posteriores. */
+  getArgumentCompletions?: (args: string[]) => AutocompleteItem[];
+  /** Handler que ejecuta el subcomando. Recibe los argumentos restantes ya parseados y el contexto. */
+  handler: (args: string[], ctx: ExtensionCommandContext) => Promise<void> | void;
 }

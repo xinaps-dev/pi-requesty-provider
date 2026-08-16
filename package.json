@@ -1,6 +1,6 @@
 {
   "name": "pi-requesty-provider",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Requesty provider extension for pi coding agent with dynamic model discovery, unified /requesty command, and /login support",
   "type": "module",
   "main": "dist/index.js",
@@ -34,7 +34,7 @@
     "provider"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepublishOnly": "npm run build"
