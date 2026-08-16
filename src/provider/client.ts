@@ -1,5 +1,6 @@
 import type { RequestyModelsResponse } from "./types.js";
-import { DEFAULT_BASE_URL, REQUESTY_HEADERS } from "./constants.js";
+import { DEFAULT_BASE_URL } from "./constants.js";
+import { REQUESTY_HEADERS } from "../constants.js";
 
 /**
  * Error thrown when the Requesty API returns a non-2xx response.

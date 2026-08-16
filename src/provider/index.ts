@@ -1,11 +1,7 @@
 import type {
-  ApiKeyCredential,
-  AssistantMessageEventStream,
-  Context,
   Model,
   Provider,
   RefreshModelsContext,
-  SimpleStreamOptions,
 } from "@earendil-works/pi-ai";
 import { stream, streamSimple } from "@earendil-works/pi-ai/compat";
 import { fetchRequestyModels } from "./client.js";
@@ -49,7 +45,7 @@ export function createRequestyProvider(): {
 async function refreshModelsInternal(
   context: RefreshModelsContext
 ): Promise<void> {
-  const credential = context.credential as ApiKeyCredential | undefined;
+  const credential = context.credential as any | undefined;
   const apiKey = credential?.key;
 
   if (!apiKey) {
@@ -134,3 +130,9 @@ export function setCachedModels(
 ): void {
   cachedModels = models;
 }
+
+// Re-export types
+export type { RequestyPiModel } from "./types.js";
+
+// Re-export provider subcommands
+export { providerSubcommands } from "./commands.js";

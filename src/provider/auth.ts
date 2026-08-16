@@ -1,7 +1,6 @@
 import type {
   ApiKeyAuth,
   AuthContext,
-  AuthInteraction,
   AuthResult,
   ProviderAuthInteraction,
 } from "@earendil-works/pi-ai";

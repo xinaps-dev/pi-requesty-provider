@@ -1,22 +1,29 @@
 # pi-requesty-provider
 
-**Requesty provider extension for [pi](https://pi.dev) coding agent** — dynamic model discovery, unified `/requesty` command, and native `/login` support.
+[![npm version](https://img.shields.io/npm/v/pi-requesty-provider?color=blue&logo=npm)](https://www.npmjs.com/package/pi-requesty-provider)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![pi Extension](https://img.shields.io/badge/pi-extension-purple.svg)](https://pi.dev)
 
-Integrate [Requesty](https://requesty.ai), an LLM router and gateway unifying 300+ models from providers like Anthropic, OpenAI, Google Vertex, DeepSeek, xAI, Mistral, Together, and more, directly into your pi workflow.
+> **Unlock 300+ frontier & open-source LLMs in [pi](https://pi.dev) with native tool calling, smart reasoning, real-time pricing, and built-in web search.**
 
-## Features
+`pi-requesty-provider` seamlessly bridges [Requesty](https://requesty.ai) — the next-generation LLM router and AI gateway — directly into the **pi** coding agent. Experience Claude 3.7 Sonnet, OpenAI o3/GPT-4.5, DeepSeek R1/V3, Qwen, Gemini, Mistral, and hundreds more under a single unified provider.
 
-- 🔐 **Native Authentication** — `/login requesty` and `/logout requesty` manage credentials securely in `~/.pi/agent/auth.json`
-- 🔍 **Dynamic Model Discovery** — automatically fetches and maps all approved models from `GET /v1/models`
-- 🧠 **Thinking & Vision Support** — reasoning models and vision-capable models are correctly flagged
-- 💰 **Pricing Transparency** — per-million-token costs mapped for both direct and tiered pricing
-- ⚡ **Streaming & Tool Calling** — full OpenAI-compatible streaming with SSE, thinking blocks, and tool calls
-- 📦 **Single Command** — unified `/requesty [sync|status]` with autocomplete
-- 🌐 **Multi-Region** — US (`router.requesty.ai`) and EU (`router.eu.requesty.ai`) endpoints
+---
 
-## Installation
+## ⚡ Superpowers & Features
 
-### From npm (recommended)
+- 🌐 **Native Web Search Integration** — Browse the live web during agent execution without external tools. Toggle dynamically with `/requesty search native on/off` (powered by Requesty's server-side web grounding).
+- 🛡️ **100% Agent-Ready (Smart Tool Filtering)** — Automatically filters out models lacking function/tool calling support. Every model in your picker is guaranteed to work reliably with `pi` tools.
+- 🧠 **Deep Reasoning & Vision Support** — Automatic detection of thinking budgets, reasoning effort, and multimodal vision capabilities (`["text", "image"]`).
+- 💰 **Real-Time Cost & Cache Tracking** — Precise per-million-token cost mapping, including tiered pricing, prompt caching read/write rates, and context limits.
+- ⌨️ **Extensible CLI & Multi-Level Autocomplete** — Unified `/requesty` command router with dynamic categorized help, interactive nested tab-completion, and status monitoring.
+- 🔐 **Native Auth & Multi-Region** — Standard `/login requesty` flow storing credentials securely in `~/.pi/agent/auth.json`, supporting US and EU endpoints.
+
+---
+
+## 🚀 Quick Installation
+
+### From npm (Recommended)
 
 ```bash
 pi install npm:pi-requesty-provider
@@ -25,137 +32,178 @@ pi install npm:pi-requesty-provider
 ### From GitHub
 
 ```bash
-pi install git:github.com/xinaps/pi-requesty-provider
+pi install git:github.com/xinaps-dev/pi-requesty-provider
 ```
 
-### Manual (local development)
+### Local Development
 
 ```bash
-# Clone and install dependencies
-git clone https://github.com/xinaps/pi-requesty-provider.git
+# Clone and build
+git clone https://github.com/xinaps-dev/pi-requesty-provider.git
 cd pi-requesty-provider
 pnpm install
 pnpm build
 
-# Load locally with pi
+# Run locally in pi
 pi -e ./
 ```
 
-## Quick Start
+---
+
+## 🎯 Getting Started
 
 ### 1. Authenticate
+
+Run the native login command inside `pi`:
 
 ```
 /login requesty
 ```
 
-You'll be prompted for your API key (found at [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys)) and optionally the base URL.
+Enter your API key (get one at [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys)).
 
-### 2. Select a Model
+### 2. Pick Any Model
+
+Open the model selector:
 
 ```
 /model
 ```
 
-Models appear as `requesty/<model-id>` (e.g., `requesty/anthropic/claude-sonnet-4-5`). Use fuzzy search to filter.
+All models are listed as `requesty/<model-id>` (e.g. `requesty/anthropic/claude-3-7-sonnet`, `requesty/deepseek/deepseek-r1`). Type to filter with fuzzy search.
 
-### 3. Use Commands
+### 3. Enable Native Web Search (Optional)
 
-| Command | Description |
-|---------|-------------|
-| `/requesty` | Show help and available subcommands |
-| `/requesty sync` | Refresh the model catalog from Requesty API |
-| `/requesty status` | Show authentication status, endpoint, and model count |
+Give your models real-time web access:
 
-## Environment Variables
+```
+/requesty search native on
+```
 
-You can also configure Requesty without logging in:
+---
+
+## 🛠️ Command Reference
+
+The `/requesty` command comes with full autocomplete and categorized subcommands:
+
+| Command | Category | Description |
+|---|---|---|
+| `/requesty` | General | Show interactive help and subcommand index |
+| `/requesty sync` | Provider | Fetch and refresh the active model catalog from Requesty API |
+| `/requesty status` | Provider | Display connection status, active model, endpoints, and search support |
+| `/requesty search native on` | Search | Enable Requesty native web search grounding (persisted) |
+| `/requesty search native off` | Search | Disable Requesty native web search grounding |
+| `/requesty search native status` | Search | Show web search configuration and model capability |
+
+---
+
+## ⚙️ Environment Variables
+
+Prefer configuring via environment variables? Simply export:
 
 | Variable | Description | Default |
-|----------|-------------|---------|
-| `REQUESTY_API_KEY` | Your Requesty API key | _(required)_ |
-| `REQUESTY_BASE_URL` | Custom base URL | `https://router.requesty.ai/v1` |
+|---|---|---|
+| `REQUESTY_API_KEY` | Your Requesty API key | _(required if not logged in)_ |
+| `REQUESTY_BASE_URL` | Custom gateway endpoint | `https://router.requesty.ai/v1` |
 
-## Model Capabilities
+---
 
-The extension automatically detects and maps the following model attributes:
+## 🔍 Model Metadata Mapping
 
-| Requesty Attribute | pi Capability |
-|--------------------|---------------|
-| `supports_reasoning` | Thinking/reasoning mode enabled |
-| `supports_vision` | Image input support (`["text", "image"]`) |
-| `context_window` | Context window size in tokens |
-| `max_output_tokens` | Maximum output tokens |
-| `pricing[]` | Per-million-token costs (input, output, cache) |
-| `supports_role_developer` | Developer role vs system role |
+The provider parses Requesty's model catalog into `pi` native capabilities:
 
-## Architecture
+| Requesty Attribute | pi Model Feature | Impact |
+|---|---|---|
+| `supports_reasoning` | `reasoning: true`, `compat.supportsReasoningEffort` | Enables thinking/reasoning blocks |
+| `supports_vision` | `input: ["text", "image"]` | Allows image and multimodal inputs |
+| `supports_tools` / `supports_function_calling` | Catalog filter | Ensures 100% agent execution compatibility |
+| `supports_web_search` | Model capability flag | Controls native web search injection |
+| `context_window` & `max_output_tokens` | `contextWindow`, `maxTokens` | Optimizes context management and limits |
+| `pricing[]` / `input_price` / `caching_price` | `cost.input`, `cost.output`, `cost.tiers` | Accurate prompt and cache token cost tracking |
+
+---
+
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    pi CLI / TUI Runtime                  │
-│                                                          │
-│  /login requesty    /requesty     /model requesty/...   │
-│  /logout requesty   [sync|status]                        │
-│        │                │               │                │
-│        ▼                ▼               ▼                │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │         pi-requesty-provider Extension           │   │
-│  │                                                  │   │
-│  │  Auth Module    Catalog Engine    OpenAI Stream  │   │
-│  │  (ApiKeyAuth)   (Model Parser)   (Completions)   │   │
-│  └──────────────────────────────────────────────────┘   │
-│                          │                              │
-└──────────────────────────┼──────────────────────────────┘
-                           ▼
-              ┌──────────────────────────────┐
-              │    Requesty Router Gateway   │
-              │   https://router.requesty.ai │
-              ├──────────────────────────────┤
-              │  GET  /v1/models             │
-              │  POST /v1/chat/completions   │
-              └──────────────────────────────┘
-                           ▼
-                 ~/.pi/agent/auth.json
+┌────────────────────────────────────────────────────────────────────────┐
+│                          pi CLI / TUI Runtime                          │
+│                                                                        │
+│   /login requesty    /requesty [sync|status|search]    /model requesty │
+│         │                          │                          │        │
+│         ▼                          ▼                          ▼        │
+│   ┌───────────────────────────────────────────────────────────────┐    │
+│   │                pi-requesty-provider Extension                 │    │
+│   │                                                               │    │
+│   │   ┌──────────────┐   ┌─────────────────┐   ┌──────────────┐   │    │
+│   │   │  AuthEngine  │   │  CommandRouter  │   │  CatalogSync │   │    │
+│   │   │ (ApiKeyAuth) │   │ (Multi-level AC)│   │(Model Parser)│   │    │
+│   │   └──────────────┘   └─────────────────┘   └──────────────┘   │    │
+│   │                               │                               │    │
+│   │              ┌────────────────┴────────────────┐              │    │
+│   │              │  before_provider_request Hook   │              │    │
+│   │              │  (Native Web Search Injection)  │              │    │
+│   │              └────────────────┬────────────────┘              │    │
+│   └───────────────────────────────┼───────────────────────────────┘    │
+│                                   │                                    │
+└───────────────────────────────────┼────────────────────────────────────┘
+                                    ▼
+                     ┌──────────────────────────────┐
+                     │    Requesty Router Gateway   │
+                     │   https://router.requesty.ai │
+                     ├──────────────────────────────┤
+                     │  GET  /v1/models             │
+                     │  POST /v1/chat/completions   │
+                     └──────────────────────────────┘
+                                    ▼
+              ~/.pi/agent/auth.json  │  ~/.pi/agent/requesty.json
 ```
 
-## Development
+---
+
+## 💻 Development & Contributing
 
 ### Prerequisites
 
 - Node.js 20+
 - pnpm 8+
 
-### Commands
+### Scripts
 
 ```bash
 pnpm install          # Install dependencies
 pnpm build            # Compile TypeScript to dist/
-pnpm typecheck        # Type-check without emitting
-pnpm test             # Run vitest suite
-pnpm prepublishOnly   # Build before publishing (auto-run)
+pnpm typecheck        # Run type checking
+pnpm test             # Run Vitest test suite
+pnpm prepublishOnly   # Auto-checks before release
 ```
 
-### Project Structure
+### Project Layout
 
 ```
 pi-requesty-provider/
 ├── src/
-│   ├── index.ts          # Extension entrypoint
-│   ├── provider.ts       # createProvider + model refresh
-│   ├── auth.ts           # ApiKeyAuth (login/resolve/check)
-│   ├── commands.ts       # /requesty command handler
-│   ├── models.ts         # Requesty → pi model transformer
-│   ├── client.ts         # HTTP client for Requesty API
-│   ├── types.ts          # TypeScript type definitions
-│   └── constants.ts      # URLs, defaults, headers
-├── tests/
-│   ├── models-parser.test.ts
-│   ├── auth.test.ts
-│   └── commands.test.ts
-└── package.json
+│   ├── index.ts              # Extension entry point & lifecycle hooks
+│   ├── commands.ts           # Unified hierarchical /requesty command router
+│   ├── types.ts              # Global extension types & definitions
+│   ├── constants.ts          # Extension-level constants
+│   ├── provider/             # Core Provider module
+│   │   ├── index.ts          # Provider factory and model caching
+│   │   ├── auth.ts           # ApiKeyAuth implementation
+│   │   ├── client.ts         # Requesty REST client
+│   │   ├── models.ts         # Model transformer & capability mapper
+│   │   ├── commands.ts       # sync & status subcommand handlers
+│   │   └── types.ts          # Requesty API & Model types
+│   └── search/               # Native Web Search module
+│       ├── index.ts          # Search module exports
+│       ├── config.ts         # Config store (~/.pi/agent/requesty.json)
+│       ├── interceptor.ts    # before_provider_request payload interceptor
+│       └── commands.ts       # /requesty search native subcommands
+└── tests/                    # Unit and integration tests
 ```
 
-## License
+---
 
-MIT © [xinaps](https://github.com/xinaps)
+## 📄 License
+
+MIT © [xinaps](https://github.com/xinaps-dev)

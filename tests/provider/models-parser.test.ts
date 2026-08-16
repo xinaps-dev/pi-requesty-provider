@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { transformRequestyModelToPiModel } from "../src/models.js";
-import { DEFAULT_BASE_URL } from "../src/constants.js";
-import type { RequestyModel } from "../src/types.js";
+import {
+  transformRequestyModelToPiModel,
+  transformRequestyModels,
+} from "../../src/provider/models.js";
+import { DEFAULT_BASE_URL } from "../../src/provider/constants.js";
+import type { RequestyModel } from "../../src/provider/types.js";
 
 const BASE_URL = DEFAULT_BASE_URL;
 
@@ -143,5 +146,59 @@ describe("transformRequestyModelToPiModel", () => {
     const result = transformRequestyModelToPiModel(model, BASE_URL);
     expect(result.contextWindow).toBe(200_000);
     expect(result.maxTokens).toBe(8_192);
+  });
+
+  it("maps supports_web_search: true to supportsWebSearch: true", () => {
+    const model = createRequestyModel({ supports_web_search: true });
+    const result = transformRequestyModelToPiModel(model, BASE_URL);
+    expect(result.supportsWebSearch).toBe(true);
+  });
+
+  it("maps supports_web_search: false to supportsWebSearch: false", () => {
+    const model = createRequestyModel({ supports_web_search: false });
+    const result = transformRequestyModelToPiModel(model, BASE_URL);
+    expect(result.supportsWebSearch).toBe(false);
+  });
+
+  it("maps supports_web_search: undefined to supportsWebSearch: false", () => {
+    const model = createRequestyModel({ supports_web_search: undefined });
+    const result = transformRequestyModelToPiModel(model, BASE_URL);
+    expect(result.supportsWebSearch).toBe(false);
+  });
+});
+
+describe("transformRequestyModels - filtering", () => {
+  it("filters out models where supports_tools is false", () => {
+    const models: RequestyModel[] = [
+      createRequestyModel({ id: "openai/gpt-4o", supports_tools: true }),
+      createRequestyModel({ id: "some/no-tools", supports_tools: false }),
+    ];
+    const result = transformRequestyModels(models, BASE_URL);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("openai/gpt-4o");
+  });
+
+  it("filters out models where supports_function_calling is false", () => {
+    const models: RequestyModel[] = [
+      createRequestyModel({ id: "anthropic/claude-3-7-sonnet", supports_function_calling: true }),
+      createRequestyModel({ id: "custom/no-functions", supports_function_calling: false }),
+    ];
+    const result = transformRequestyModels(models, BASE_URL);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("anthropic/claude-3-7-sonnet");
+  });
+
+  it("filters out perplexity models", () => {
+    const models: RequestyModel[] = [
+      createRequestyModel({ id: "perplexity/sonar" }),
+      createRequestyModel({ id: "perplexity/sonar-reasoning" }),
+      createRequestyModel({ id: "openai-responses/gpt-5-nano" }),
+      createRequestyModel({ id: "google/gemini-2.5-flash-lite:flex" }),
+    ];
+    const result = transformRequestyModels(models, BASE_URL);
+    expect(result.map((m) => m.id)).toEqual([
+      "openai-responses/gpt-5-nano",
+      "google/gemini-2.5-flash-lite:flex",
+    ]);
   });
 });
