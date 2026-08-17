@@ -1,10 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createRequestyProvider, providerSubcommands } from "./provider/index.js";
+import { createRequestyProvider, providerSubcommands } from "./src/provider/index.js";
 import {
   searchSubcommands,
   handleNativeSearchBeforeProviderRequest,
-} from "./search/index.js";
-import { registerSubcommands, createRequestyCommand } from "./commands.js";
+} from "./src/search/index.js";
+import { registerSubcommands, createRequestyCommand } from "./src/commands.js";
 
 /**
  * Default export — the extension factory function.

@@ -8,6 +8,7 @@ import { validateApiKey, fetchRequestyModels } from "./client.js";
 import {
   DEFAULT_BASE_URL,
   DEFAULT_EU_BASE_URL,
+  REQUESTY_ENDPOINTS,
   REQUESTY_PROVIDER_ID,
 } from "./constants.js";
 
@@ -32,28 +33,21 @@ export function createRequestyAuth(): ApiKeyAuth {
         throw new Error("API key cannot be empty.");
       }
 
-      // Prompt for base URL (optional override)
+      // Prompt for regional endpoint selection
       let baseUrl = DEFAULT_BASE_URL;
       try {
-        const urlChoice = await interaction.prompt({
-          type: "text",
-          message:
-            "Base URL (leave empty for default US: https://router.requesty.ai/v1, or enter EU: https://router.eu.requesty.ai/v1)",
-          placeholder: DEFAULT_BASE_URL,
+        const selectedEndpoint = await interaction.prompt({
+          type: "select",
+          message: "Select Requesty region / endpoint:",
+          options: REQUESTY_ENDPOINTS,
           signal: interaction.signal,
         });
 
-        if (urlChoice && urlChoice.trim().length > 0) {
-          const trimmed = urlChoice.trim();
-          // Auto-select EU endpoint if user enters "eu" or similar
-          if (trimmed.toLowerCase() === "eu" || trimmed.startsWith("https://router.eu")) {
-            baseUrl = DEFAULT_EU_BASE_URL;
-          } else {
-            baseUrl = trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
-          }
+        if (selectedEndpoint && selectedEndpoint.trim().length > 0) {
+          baseUrl = selectedEndpoint.trim();
         }
       } catch {
-        // User cancelled URL prompt, keep default
+        // User cancelled selection prompt, keep default
       }
 
       // Validate the API key against Requesty

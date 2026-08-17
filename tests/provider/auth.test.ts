@@ -1,6 +1,117 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createRequestyAuth } from "../../src/provider/auth.js";
-import { DEFAULT_BASE_URL } from "../../src/provider/constants.js";
+import {
+  DEFAULT_BASE_URL,
+  DEFAULT_EU_BASE_URL,
+  REQUESTY_ENDPOINTS,
+} from "../../src/provider/constants.js";
+import * as client from "../../src/provider/client.js";
+
+describe("createRequestyAuth - login", () => {
+  const auth = createRequestyAuth();
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("successfully logs in with US (Global) endpoint", async () => {
+    vi.spyOn(client, "validateApiKey").mockResolvedValue(true);
+    vi.spyOn(client, "fetchRequestyModels").mockResolvedValue({
+      data: [{ id: "model-1", created: 0, object: "model", owned_by: "requesty" }],
+      object: "list",
+    });
+
+    const promptMock = vi
+      .fn()
+      .mockResolvedValueOnce("sk-test-key")
+      .mockResolvedValueOnce(DEFAULT_BASE_URL);
+    const notifyMock = vi.fn();
+
+    const result = await auth.login!({
+      prompt: promptMock,
+      notify: notifyMock,
+      signal: new AbortController().signal,
+    });
+
+    expect(promptMock).toHaveBeenNthCalledWith(1, {
+      type: "secret",
+      message: "Enter Requesty API Key (https://app.requesty.ai/api-keys)",
+      signal: expect.any(Object),
+    });
+    expect(promptMock).toHaveBeenNthCalledWith(2, {
+      type: "select",
+      message: "Select Requesty region / endpoint:",
+      options: REQUESTY_ENDPOINTS,
+      signal: expect.any(Object),
+    });
+    expect(result).toEqual({
+      type: "api_key",
+      key: "sk-test-key",
+      env: {
+        REQUESTY_BASE_URL: DEFAULT_BASE_URL,
+      },
+    });
+  });
+
+  it("successfully logs in with EU (Frankfurt) endpoint", async () => {
+    vi.spyOn(client, "validateApiKey").mockResolvedValue(true);
+    vi.spyOn(client, "fetchRequestyModels").mockResolvedValue({
+      data: [{ id: "model-1", created: 0, object: "model", owned_by: "requesty" }],
+      object: "list",
+    });
+
+    const promptMock = vi
+      .fn()
+      .mockResolvedValueOnce("sk-test-key")
+      .mockResolvedValueOnce(DEFAULT_EU_BASE_URL);
+    const notifyMock = vi.fn();
+
+    const result = await auth.login!({
+      prompt: promptMock,
+      notify: notifyMock,
+      signal: new AbortController().signal,
+    });
+
+    expect(result).toEqual({
+      type: "api_key",
+      key: "sk-test-key",
+      env: {
+        REQUESTY_BASE_URL: DEFAULT_EU_BASE_URL,
+      },
+    });
+  });
+
+  it("throws when API key is empty", async () => {
+    const promptMock = vi.fn().mockResolvedValueOnce("");
+    const notifyMock = vi.fn();
+
+    await expect(
+      auth.login!({
+        prompt: promptMock,
+        notify: notifyMock,
+        signal: new AbortController().signal,
+      })
+    ).rejects.toThrow("API key cannot be empty.");
+  });
+
+  it("throws when API key validation fails", async () => {
+    vi.spyOn(client, "validateApiKey").mockResolvedValue(false);
+
+    const promptMock = vi
+      .fn()
+      .mockResolvedValueOnce("sk-invalid-key")
+      .mockResolvedValueOnce(DEFAULT_BASE_URL);
+    const notifyMock = vi.fn();
+
+    await expect(
+      auth.login!({
+        prompt: promptMock,
+        notify: notifyMock,
+        signal: new AbortController().signal,
+      })
+    ).rejects.toThrow("Invalid API key. Please check your credentials and try again.");
+  });
+});
 
 describe("createRequestyAuth - resolve", () => {
   const auth = createRequestyAuth();
