@@ -6,7 +6,7 @@
 
 > **Unlock 300+ frontier & open-source LLMs in [pi](https://pi.dev) with native tool calling, smart reasoning, real-time pricing, and built-in web search.**
 
-`pi-requesty-provider` seamlessly bridges [Requesty](https://requesty.ai) — the next-generation LLM router and AI gateway — directly into the **pi** coding agent. Experience Claude 3.7 Sonnet, OpenAI o3/GPT-4.5, DeepSeek R1/V3, Qwen, Gemini, Mistral, and hundreds more under a single unified provider.
+`pi-requesty-provider` seamlessly bridges [Requesty](https://requesty.ai) — the next-generation LLM router and AI gateway — directly into the **pi** coding agent. Experience Claude Fable 5, OpenAI GPT-5.6 Sol, xAI Grok 4.6, Gemini 3.7 Flash, Kimi K3, Qwen3.8 Max, DeepSeek V4 Pro, GLM-5, and hundreds more under a single unified provider.
 
 ---
 
@@ -60,7 +60,10 @@ Run the native login command inside `pi`:
 /login requesty
 ```
 
-Enter your API key (get one at [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys)).
+1. Enter your API key (get one at [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys)).
+2. Select your regional endpoint:
+   - **US (Global)**: `https://router.requesty.ai/v1` (Default)
+   - **EU (Frankfurt)**: `https://router.eu.requesty.ai/v1` (GDPR compliant endpoint)
 
 ### 2. Pick Any Model
 
@@ -172,18 +175,16 @@ The provider parses Requesty's model catalog into `pi` native capabilities:
 
 ```bash
 pnpm install          # Install dependencies
-pnpm build            # Compile TypeScript to dist/
 pnpm typecheck        # Run type checking
 pnpm test             # Run Vitest test suite
-pnpm prepublishOnly   # Auto-checks before release
 ```
 
 ### Project Layout
 
 ```
 pi-requesty-provider/
+├── index.ts                  # Extension entry point & lifecycle hooks
 ├── src/
-│   ├── index.ts              # Extension entry point & lifecycle hooks
 │   ├── commands.ts           # Unified hierarchical /requesty command router
 │   ├── types.ts              # Global extension types & definitions
 │   ├── constants.ts          # Extension-level constants
